@@ -2,7 +2,7 @@
  * Description : route information
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 31st Jan 2020
+ * Last modified : 1st Feb 2020
  */
 
 import {
@@ -13,7 +13,8 @@ import {
     currentCommission,
     periods,
     historicalCommissions,
-    realTimeBonusDetails
+    realTimeBonusDetails,
+    historicalBonusDetails
 } from './index';
 
 export const routes = [
@@ -25,6 +26,7 @@ export const routes = [
     { method: 'POST', path: '/periods', handler: periods },
     { method: 'GET', path: '/historicalcommissions/{customerid}/{runid}', handler: historicalCommissions },
     { method: 'POST', path: '/realtimebonusdetails', handler: realTimeBonusDetails },
+    { method: 'POST', path: '/historicalbonusdetails', handler: historicalBonusDetails }
 ]
 
 

@@ -2,7 +2,7 @@
  * Description : 
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 31st Jan 2020
+ * Last modified : 1st Feb 2020
  */
 import {
     getCustomerRealTimeCommissions,
@@ -10,7 +10,8 @@ import {
     getSummaryCommissions,
     getCurrentCommission,
     getHistoricalCommissions,
-    getRealTimeBonusDetails
+    getRealTimeBonusDetails,
+    getHistoricalBonusDetails
 } from '../service/commission/commission';
 import { getCurrentPeriod, getPeriods } from '../service/period/period';
 import * as constants from '../common/constant';
@@ -107,4 +108,23 @@ export const realTimeBonusDetails = function (request, reply) {
     const periodId = Number(request.payload.PeriodID);
     const periodTypeId = Number(request.payload.PeriodTypeID);
     return getRealTimeBonusDetails({ CustomerID: customerId, PeriodID: periodId, BonusID: bonusId, PeriodTypeID: periodTypeId });
+}
+
+
+/**
+ * Get Historical Bonus Details
+ * @param CustomerID
+ * @param CommissionRunID
+ * @param BonusID
+ * @param PageSize
+ * @param PageNo
+ * @returns Historical Bonus
+ */
+export const historicalBonusDetails = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const bonusId = Number(request.payload.BonusID);
+    const commissionRunId = Number(request.payload.CommissionRunID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getHistoricalBonusDetails({ CustomerID: customerId, CommissionRunID: commissionRunId, BonusID: bonusId, PageSize: pageSize, PageNo: pageNo });
 }
