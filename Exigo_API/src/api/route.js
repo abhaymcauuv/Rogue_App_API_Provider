@@ -29,6 +29,5 @@ export const routes = [
     { method: 'POST', path: '/historicalbonusdetails', handler: historicalBonusDetails }
 ]
 
-
-export default routes
+export default routes;
 

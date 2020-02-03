@@ -25,7 +25,7 @@ export const getCurrentPeriod = function (periodTypeID) {
                                         FROM Periods p
                                          WHERE p.PeriodTypeID = @periodtype
                                          AND GETDATE() between p.StartDate and dateadd(day, 1, p.EndDate)
-                                         ORDER BY p.AcceptedDate desc, p.EndDate desc`
+                                         ORDER BY p.AcceptedDate desc, p.EndDate desc`;
 
             let params = [
                             { Name: 'periodtype', Type: sql.Int, Value: periodTypeId }
@@ -60,7 +60,7 @@ export const getPeriods = function (request) {
                             FROM Periods p
                                 WHERE p.PeriodTypeID = @PeriodTypeID
                                 AND p.PeriodID IN (@PeriodID)
-                                Order by p.PeriodID Desc`
+                                Order by p.PeriodID Desc`;
 
             let params = [
                             { Name: 'PeriodTypeID', Type: sql.Int, Value: periodTypeId },

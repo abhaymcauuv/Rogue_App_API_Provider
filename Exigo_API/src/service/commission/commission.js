@@ -8,7 +8,7 @@ import sql from 'mssql';
 import { getCurrentPeriod, getPeriods } from '../period/period';
 import { getRealTimeCommissions, getRealTimeCommissionDetails } from '../webservice/webservice';
 import { executeQuery } from '../../db/mssql';
-import { getCustomerVolumes } from '../volume/volumes';
+import { getCustomerVolumes } from '../volume/volume';
 import { getCustomerOrders } from '../order/order';
 import * as constants from '../../common/constant';
 
@@ -40,7 +40,7 @@ export const getSummaryCommissions = function (customerID) {
                          INNER JOIN Periods p
                          ON CONVERT(date, hs.Period) = CONVERT(date, p.StartDate)
                          WHERE designerid = @customerid
-                         ORDER BY p.StartDate DESC`
+                         ORDER BY p.StartDate DESC`;
 
         let params = [
             {
@@ -81,7 +81,7 @@ export const getHistoricalCommissionPeriod = function () {
                                                ON cr.PeriodID = p.PeriodID
                                                AND cr.PeriodTypeID = p.PeriodTypeID
                                        --WHERE p.StartDate >= '2018-07-01'
-                                       ORDER BY cr.PeriodID DESC`
+                                       ORDER BY cr.PeriodID DESC`;
 
         let params = [];
         let commissionPeriodResult = await executeQuery({ SqlQuery: query, SqlParams: params });
@@ -138,7 +138,7 @@ export const getHistoricalCommissions = function (request) {
                                               ON r.RankID = pv.PaidRankID
                                          WHERE c.CustomerID = @customerid
                                               AND c.CommissionRunID = @commissionrunid 
-                                         ORDER BY cr.periodid DESC`
+                                         ORDER BY cr.periodid DESC`;
 
         let params = [
             {
@@ -184,7 +184,7 @@ export const getHistoricalCommissions = function (request) {
                                        LEFT JOIN Ranks r
                                             ON r.RankID = pv.PaidRankID
                                        WHERE cr.CommissionRunID =@commissionrunid
-                                       ORDER BY cr.periodid DESC`
+                                       ORDER BY cr.periodid DESC`;
 
             let historicalCommissionResult2 = await executeQuery({ SqlQuery: historicalCommissionQuery2, SqlParams: params });
             resData = historicalCommissionResult2[0];
@@ -292,6 +292,12 @@ export const getHistoricalBonusDetails = function (request) {
                             data.CommissionAmount = orderRes.Orders[0].Other1Total;
                             let CurrencyCode = {
                                 CurrencyCode: orderRes.Orders[0].CurrencyCode.toUpperCase()
+                            };
+                            data = { ...data, ...CurrencyCode };
+                        }
+                        if (!data.CurrencyCode) {
+                            let CurrencyCode = {
+                                CurrencyCode: constants.CurrencyCode.US
                             };
                             data = { ...data, ...CurrencyCode };
                         }
@@ -570,7 +576,7 @@ export const getHistoricalBonus = function (request) {
                                cd.CustomerID = @customerid
                                AND cd.CommissionRunID = @commissionrunid
                                AND cd.BonusID = @bonusid
-                               ORDER BY cd.FromCustomerID DESC`
+                               ORDER BY cd.FromCustomerID DESC`;
 
         let params = [
             {

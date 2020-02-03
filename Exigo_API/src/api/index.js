@@ -14,7 +14,6 @@ import {
     getHistoricalBonusDetails
 } from '../service/commission/commission';
 import { getCurrentPeriod, getPeriods } from '../service/period/period';
-import * as constants from '../common/constant';
 
 /**
  * Get Customer RealTime Commissions
@@ -79,8 +78,6 @@ export const periods = function (request, reply) {
     return getPeriods({ PeriodIDs: periodIds, PeriodTypeID: periodTypeId });
 }
 
-
-
 /**
  * Get Historical Commissions
  * @param customerid
@@ -93,13 +90,12 @@ export const historicalCommissions = function (request, reply) {
     return getHistoricalCommissions({ CustomerID: customerId, CommissionRunID: commissionRunId });
 }
 
-
 /**
  * Get RealTime Bonus Details
  * @param CustomerID
  * @param PeriodID
  * @param BonusID
- * @param PeriodID
+ * @param PeriodTypeID
  * @returns RealTime Bonus Details
  */
 export const realTimeBonusDetails = function (request, reply) {
@@ -109,7 +105,6 @@ export const realTimeBonusDetails = function (request, reply) {
     const periodTypeId = Number(request.payload.PeriodTypeID);
     return getRealTimeBonusDetails({ CustomerID: customerId, PeriodID: periodId, BonusID: bonusId, PeriodTypeID: periodTypeId });
 }
-
 
 /**
  * Get Historical Bonus Details
