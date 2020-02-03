@@ -1,0 +1,40 @@
+{
+  "name": "Rogue_App_API_Provider",
+  "version": "1.0.0",
+  "description": "Rogue application api provider",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently --kill-others \"nodemon --exec babel-node src/app.js\" "
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@babel/core": "^7.2.2",
+    "@babel/node": "^7.2.2",
+    "@babel/plugin-proposal-export-default-from": "^7.2.0",
+    "@babel/preset-env": "^7.6.2",
+    "@babel/preset-react": "^7.0.0",
+    "@babel/register": "^7.0.0",
+    "@hapi/hapi": "^18.4.0",
+    "amqplib": "^0.5.5",
+    "axios": "^0.19.0",
+    "babel-core": "^7.0.0-bridge.0",
+    "babel-loader": "^8.0.5",
+    "babel-node": "0.0.1-security",
+    "camaro": "^4.1.2",
+    "dotenv-safe": "^6.1.0",
+    "easy-soap-request": "^3.2.0",
+    "hapi": "^18.1.0",
+    "loadash": "^1.0.0",
+    "mongoose": "^5.7.13",
+    "mssql": "^6.0.1",
+    "nodemon": "^2.0.1",
+    "servicebus": "^2.3.3",
+    "uuid": "^3.3.3"
+  },
+  "devDependencies": {
+    "concurrently": "^5.0.0",
+    "npm-run-all": "^4.1.5"
+  }
+}
