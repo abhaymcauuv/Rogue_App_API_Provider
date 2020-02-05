@@ -1,3 +1,9 @@
+/** File Name : dbconnection.js
+ * Description : create db instance
+ * Created By : Abhay
+ * Modified By : Abhay
+ * Last modified : 31st Jan 2020
+ */
 import sql from 'mssql';
 import { dbconnection } from '../common/config';
 

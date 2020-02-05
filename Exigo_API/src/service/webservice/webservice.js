@@ -41,7 +41,7 @@ export const getRealTimeCommissions = function (customerid) {
                         PeriodDescription: "PeriodDescription",
                         CurrencyCode: "CurrencyCode",
                         CommissionTotal: "CommissionTotal",
-                        Bonuses: ["//Bonuses//CommissionBonusResponse", {
+                        Bonuses: ["Bonuses/CommissionBonusResponse", {
                             Description: "Description",
                             Amount: "Amount",
                             BonusID: "BonusID"
@@ -65,7 +65,7 @@ export const getRealTimeCommissions = function (customerid) {
             if (result.CommissionsResult.length > 0) {
                 const commissionResult = result.CommissionsResult[0].Commissions;
                 commissionResult.forEach(function (commissiondata, index) {
-                    var commission = {
+                    let commission = {
                         CustomerID: commissiondata.CustomerID,
                         PeriodType: commissiondata.PeriodType,
                         PeriodID: commissiondata.PeriodID,
@@ -76,7 +76,7 @@ export const getRealTimeCommissions = function (customerid) {
                     }
                     var bonuses = commissiondata.Bonuses;
                     bonuses.forEach(function (data, index) {
-                        const bonus = {
+                        let bonus = {
                             Description: data.Description,
                             Amount:  data.Amount,
                             BonusID: data.BonusID,
