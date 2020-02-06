@@ -47,3 +47,10 @@ export const CommissionTypes = {
      HistoricalCommission: 1,
      HistoricalSummaryCommission: 2
 }
+
+export const CustomerTypes = {
+     RetailCustomer: 1,
+     PreferredCustomer: 2,
+     Distributor: 3,
+     D2C: 4
+}
