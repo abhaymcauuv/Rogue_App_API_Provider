@@ -39,7 +39,31 @@ export const getCustomerList = function (request) {
             }
         ];
         let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
-        return resolve(resData);
+
+        let noOfCustomer = 0;
+        if (!request.IsCount) {
+            let countQuery = ` SELECT COUNT(*) as customers
+                                 FROM (SELECT DISTINCT
+                                        [CustomerID] = o.CustomerID
+                                       ,[CustomerName] = c.FirstName + ' ' + c.LastName
+                                       ,[Email] = c.LoginName
+                                       ,[Phone] = c.Phone
+                                       ,[Address] = c.MainAddress1
+                                       ,City
+                                       ,State
+                                      ,Country
+                                    FROM [Orders] AS o
+                                        INNER JOIN Customers AS c ON c.CustomerID = o.CustomerID
+                                    WHERE
+                                         c.CustomerTypeID IN (${customerTypes})
+                                         AND
+                                         o.Other14 = CAST(@customerId  AS NVARCHAR(200))
+                                         ) as dt`;
+
+            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+            noOfCustomer = res.length > 0 ? res[0].customers : 0
+        }
+        return resolve({ "Customers": resData, "Count": noOfCustomer });
 
     });
     return promise;

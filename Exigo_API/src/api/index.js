@@ -132,7 +132,6 @@ export const historicalBonusDetails = function (request, reply) {
 
 //#region Report
 
-
 /**
  * Get Customer List
  * @param CustomerID
@@ -144,8 +143,7 @@ export const customerList = function (request, reply) {
     const customerId = Number(request.payload.CustomerID);
     const pageSize = Number(request.payload.PageSize);
     const pageNo = Number(request.payload.PageNo);
-    return getCustomerList({ CustomerID: customerId,PageSize: pageSize, PageNo: pageNo });
+    return getCustomerList({ CustomerID: customerId, PageSize: pageSize, PageNo: pageNo, IsCount: request.payload.IsCount });
 }
-
 
 //#endregion

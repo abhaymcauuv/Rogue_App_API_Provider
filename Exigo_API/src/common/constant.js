@@ -4,7 +4,6 @@
  * Modified By : Abhay
  * Last modified : 31st Jan 2020
  */
-
 export const SoapHeader = `<soap:Header>
                                 <ApiAuthentication xmlns="http://api.exigo.com/">
                                      <LoginName>chalkapi</LoginName>
@@ -32,7 +31,6 @@ export const BonusTypes = {
      CouturierBonus: 7
 }
 
-
 export const PeriodTypes = {
      Default: 1
 }
@@ -53,4 +51,15 @@ export const CustomerTypes = {
      PreferredCustomer: 2,
      Distributor: 3,
      D2C: 4
+}
+
+export const CustomerStatuses = {
+     Deleted: 0,
+     Active: 1,
+     Inactive: 2,
+     Suspended: 3,
+     Terminated: 4,
+     Resigned: 5,
+     Paused: 6,
+     Former: 7
 }
