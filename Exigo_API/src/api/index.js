@@ -143,7 +143,14 @@ export const customerList = function (request, reply) {
     const customerId = Number(request.payload.CustomerID);
     const pageSize = Number(request.payload.PageSize);
     const pageNo = Number(request.payload.PageNo);
-    return getCustomerList({ CustomerID: customerId, PageSize: pageSize, PageNo: pageNo, IsCount: request.payload.IsCount });
+    return getCustomerList({
+        CustomerID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder
+    });
 }
 
 //#endregion

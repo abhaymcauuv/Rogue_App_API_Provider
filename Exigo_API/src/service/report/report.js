@@ -13,7 +13,18 @@ export const getCustomerList = function (request) {
         const customerTypes = [
             constants.CustomerTypes.RetailCustomer,
             constants.CustomerTypes.PreferredCustomer
-        ]
+        ];
+
+        // let searchText = '';
+        // if (request.SearchData) {
+        //     searchText = ` AND ( o.CustomerID like '${request.SearchData}%' OR c.MainAddress1 like '${request.SearchData}%' OR c.FirstName like ''${request.SearchData}%' OR c.LastName like ''${request.SearchData}%' )`;
+        // }
+
+        let sortText = 'Order by CustomerID';
+        if (request.SortName && request.SortOrder) {
+            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+        }
+
         let query = `SELECT DISTINCT
                             [CustomerID] = o.CustomerID
                            ,[CustomerName] = c.FirstName + ' ' + c.LastName
@@ -29,7 +40,7 @@ export const getCustomerList = function (request) {
                              c.CustomerTypeID IN (${customerTypes})
                              AND
                              o.Other14 = CAST(@customerId AS NVARCHAR(200))
-                             Order by o.CustomerID`;
+                             ${sortText}`;
 
         let params = [
             {
