@@ -14,6 +14,10 @@ import {
     getHistoricalBonusDetails
 } from '../service/commission/commission';
 import { getCurrentPeriod, getPeriods } from '../service/period/period';
+import { getCustomerList } from '../service/report/report';
+
+//#region Commission
+
 
 /**
  * Get Customer RealTime Commissions
@@ -123,3 +127,31 @@ export const historicalBonusDetails = function (request, reply) {
     const pageNo = Number(request.payload.PageNo);
     return getHistoricalBonusDetails({ CustomerID: customerId, CommissionRunID: commissionRunId, BonusID: bonusId, PageSize: pageSize, PageNo: pageNo });
 }
+
+//#endregion
+
+//#region Report
+
+/**
+ * Get Customer List
+ * @param CustomerID
+ * @param PageSize
+ * @param PageNo
+ * @returns Customer List
+ */
+export const customerList = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getCustomerList({
+        CustomerID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder,
+        SearchData: request.payload.SearchData
+    });
+}
+
+//#endregion

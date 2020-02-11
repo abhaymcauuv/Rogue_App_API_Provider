@@ -14,7 +14,8 @@ import {
     periods,
     historicalCommissions,
     realTimeBonusDetails,
-    historicalBonusDetails
+    historicalBonusDetails,
+    customerList
 } from './index';
 
 export const routes = [
@@ -26,7 +27,8 @@ export const routes = [
     { method: 'POST', path: '/periods', handler: periods },
     { method: 'GET', path: '/historicalcommissions/{customerid}/{runid}', handler: historicalCommissions },
     { method: 'POST', path: '/realtimebonusdetails', handler: realTimeBonusDetails },
-    { method: 'POST', path: '/historicalbonusdetails', handler: historicalBonusDetails }
+    { method: 'POST', path: '/historicalbonusdetails', handler: historicalBonusDetails },
+    { method: 'POST', path: '/customerlist', handler: customerList }
 ]
 
 export default routes;
