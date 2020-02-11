@@ -149,7 +149,8 @@ export const customerList = function (request, reply) {
         PageNo: pageNo,
         IsCount: request.payload.IsCount,
         SortName: request.payload.SortName,
-        SortOrder: request.payload.SortOrder
+        SortOrder: request.payload.SortOrder,
+        SearchData: request.payload.SearchData
     });
 }
 
