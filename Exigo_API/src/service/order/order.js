@@ -2,10 +2,11 @@
  * Description :  To get order details
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 31st Jan 2020
+ * Last modified : 12th Feb 2020
  */
 import sql from 'mssql';
 import { executeQuery } from '../../db/mssql';
+import * as constants from '../../common/constant';
 
 export const getCustomerOrders = function (request) {
     const customerID = Number(request.CustomerID)
@@ -269,4 +270,143 @@ export const getCustomerOrders = function (request) {
             throw err
         }
     });
+}
+
+/**
+ * Get Orders 
+ * @param CustomerID
+ * @param ID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @returns Orders
+ */
+export const getOrders = function (request) {
+    const promise = new Promise(async (resolve, reject) => {
+        let sortText = 'Order by OrderDate';
+        if (request.SortName && request.SortOrder) {
+            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+        }
+        let query = `Select
+                      o.OrderDate
+                    , CountryCode = o.Country
+                    , o.CurrencyCode
+                    , o.OrderID
+                    , o.SubTotal
+                    , o.BusinessVolumeTotal
+                    , o.CommissionableVolumeTotal
+                  FROM Orders o
+                    LEFT JOIN unileveldownline ud WITH (nolock)
+                    ON o.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
+                    WHERE o.CustomerID = @customerid AND o.OrderStatusID >= @orderstatus
+                    AND ((ud.downlinecustomerid = @designerid AND (o.PriceTypeID = 3 OR (o.BusinessVolumeTotal = 0 AND o.other14 = ''))) OR (o.PriceTypeID IN (1, 2) AND o.other14 = @designerid))
+                    ${sortText}`;
+
+        let params = [
+            {
+                Name: 'customerid',
+                Type: sql.BigInt,
+                Value: request.ID
+            },
+            {
+                Name: 'designerid',
+                Type: sql.BigInt,
+                Value: request.CustomerID
+            },
+            {
+                Name: 'orderstatus',
+                Type: sql.BigInt,
+                Value: constants.OrderStatuses.Accepted
+            }
+        ];
+
+        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+
+        let noOfOrders = 0;
+        if (!request.IsCount) {
+            let countQuery = `Select count(o.OrderID) as orders
+                                        FROM Orders o
+                                        LEFT JOIN unileveldownline ud WITH (nolock)
+                                        ON o.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
+                                        WHERE o.CustomerID = @customerid AND o.OrderStatusID >= @orderstatus
+                                        AND ((ud.downlinecustomerid = @designerid AND (o.PriceTypeID = 3 OR (o.BusinessVolumeTotal = 0 AND o.other14 = ''))) OR (o.PriceTypeID IN (1, 2) AND o.other14 = @designerid))`;
+
+            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+            noOfOrders = res.length > 0 ? res[0].orders : 0
+        }
+        return resolve({ "Orders": resData, "Count": noOfOrders });
+
+    });
+    return promise;
+}
+
+
+/**
+ * Get AutoOrders 
+ * @param CustomerID
+ * @param ID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @returns AutoOrders
+ */
+export const getAutoOrders = function (request) {
+    const promise = new Promise(async (resolve, reject) => {
+        let sortText = 'Order by AutoOrderID';
+        if (request.SortName && request.SortOrder) {
+            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+        }
+        let query = `Select ao.AutoOrderID
+                          , CountryCode = ao.Country
+                          , ao.CurrencyCode
+                          , ao.StartDate
+                          , ao.LastRunDate
+                          , ao.NextRunDate
+                          , ao.SubTotal
+                          , ao.BusinessVolumeTotal
+                          , ao.CommissionableVolumeTotal                    
+                       From AutoOrders ao
+                           LEFT JOIN unileveldownline ud WITH (nolock)
+                           ON ao.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
+                           WHERE ao.CustomerID = @customerid AND ao.AutoOrderStatusID = @autoorderstatus AND (ud.downlinecustomerid = @designerid OR ao.other14 = @designerid)
+                           ${sortText}`;
+
+        let params = [
+            {
+                Name: 'customerid',
+                Type: sql.BigInt,
+                Value: request.ID
+            },
+            {
+                Name: 'designerid',
+                Type: sql.BigInt,
+                Value: request.CustomerID
+            },
+            {
+                Name: 'autoorderstatus',
+                Type: sql.BigInt,
+                Value: 0
+            }
+        ];
+
+        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+
+        let noOfAutoOrders = 0;
+        if (!request.IsCount) {
+            let countQuery = `Select count(ao.AutoOrderID) as autoorders
+                                     From AutoOrders ao
+                                     LEFT JOIN unileveldownline ud WITH (nolock)
+                                     ON ao.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
+                                     WHERE ao.CustomerID = @customerid AND ao.AutoOrderStatusID = @autoorderstatus AND (ud.downlinecustomerid = @designerid OR ao.other14 = @designerid)`;
+
+            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+            noOfAutoOrders = res.length > 0 ? res[0].autoorders : 0;
+        }
+        return resolve({ "AutoOrders": resData, "Count": noOfAutoOrders });
+    });
+    return promise;
 }

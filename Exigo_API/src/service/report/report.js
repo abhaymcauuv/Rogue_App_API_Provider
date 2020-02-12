@@ -2,81 +2,71 @@
  * Description :  To get reports
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 6th Feb 2020
+ * Last modified : 12th Feb 2020
  */
-import sql from 'mssql';
-import { executeQuery } from '../../db/mssql';
+import { getCustomers, getCustomer, isCustomerActive, isCustomerInEnrollerDownline } from '../customer/customer';
+import { getCustomerVolumes } from '../volume/volume';
 import * as constants from '../../common/constant';
+import { getCurrentPeriod } from '../period/period';
+import { getOrders, getAutoOrders } from '../order/order';
 
 export const getCustomerList = function (request) {
-    const promise = new Promise(async (resolve, reject) => {
-        const customerTypes = [
-            constants.CustomerTypes.RetailCustomer,
-            constants.CustomerTypes.PreferredCustomer
-        ];
+    return getCustomers(request);
+}
 
-        let searchText = '';
-        if (request.SearchData) {
-            searchText = "AND ( o.CustomerID like '" + request.SearchData + "%' OR c.MainAddress1 like '" + request.SearchData + "%' OR c.FirstName like '" + request.SearchData + "%' OR c.LastName like '" + request.SearchData + "%')";
-        }
+export const getCustomerDetails = function (id, customerId) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let response = {
+            };
+            const period = await getCurrentPeriod(constants.PeriodTypes.Default);
+            const periodId = Number(period.PeriodID);
 
-        let sortText = 'Order by CustomerID';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `SELECT DISTINCT
-                            [CustomerID] = o.CustomerID
-                          , [CustomerName] = c.FirstName + ' ' + c.LastName
-                          , [Email] = c.LoginName
-                          , [Phone] = c.Phone
-                          , [Address] = c.MainAddress1
-                          , City
-                          , State
-                          , Country
-                     FROM[Orders] AS o
-                          INNER JOIN Customers AS c ON c.CustomerID = o.CustomerID
-                          WHERE
-                          c.CustomerTypeID IN(${ customerTypes})
-                          AND
-                          o.Other14 = CAST(@customerId AS NVARCHAR(200))
-                          ${searchText} 
-                          ${ sortText} `;
+            response.Customer = await getCustomer(id, periodId);
+            //  response.StartDate = response.Customer.Date1;
+            response.IsDistributor = Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.Distributor || Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.D2C;
 
-        let params = [
-            {
-                Name: 'customerId',
-                Type: sql.BigInt,
-                Value: request.CustomerID
+            if (response.IsDistributor) {
+                response.Volumes = await getCustomerVolumes({
+                    CustomerID: id,
+                    PeriodTypeID: constants.PeriodTypes.Default,
+                    PeriodID: periodId,
+                    VolumesToFetch: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                });
+                response.IsActive = await isCustomerActive(id, periodId);
+
+                if (Number(response.Customer.EnrollerID) > 0) {
+                    response.Enroller = await getCustomer(Number(response.Customer.EnrollerID), periodId);
+                    if (Number(response.Customer.EnrollerID) == Number(response.Customer.SponsorID)) {
+                        response.Sponsor = response.Enroller;
+                    }
+                    else {
+                        if (Number(response.Customer.SponsorID) > 0) {
+                            response.Sponsor = await getCustomer(Number(response.Customer.SponsorID), periodId);
+                        }
+                    }
+                }
+
+                if (Number(response.Customer.RankID) == 0) {
+                    response.Customer.RankID = response.Volumes ? response.Volumes.RankID[0] : 0;
+                }
+
+                if (Number(response.Customer.EnrollerID) != customerId && Number(response.Customer.CustomerID) != customerId) {
+                    response.IsInEnrollerTree = await isCustomerInEnrollerDownline(customerId, Number(response.Customer.CustomerID));
+                }
             }
-        ];
-     
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
-      
-        let noOfCustomer = 0;
-        if (!request.IsCount) {
-            let countQuery = ` SELECT COUNT(*) as customers
-                                 FROM(SELECT DISTINCT
-                                    [CustomerID] = o.CustomerID
-                                  , [CustomerName] = c.FirstName + ' ' + c.LastName
-                                  , [Email] = c.LoginName
-                                  , [Phone] = c.Phone
-                                  , [Address] = c.MainAddress1
-                                  , City
-                                  , State
-                                  , Country
-                                    FROM[Orders] AS o
-                                        INNER JOIN Customers AS c ON c.CustomerID = o.CustomerID
-                                    WHERE
-                                         c.CustomerTypeID IN(${customerTypes})
-                                         AND
-                                         o.Other14 = CAST(@customerId  AS NVARCHAR(200))
-                                    ${searchText}) as dt`;
-
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfCustomer = res.length > 0 ? res[0].customers : 0
+            return resolve(response);
         }
-        return resolve({ "Customers": resData, "Count": noOfCustomer });
-
+        catch (err) {
+            throw err;//TODO:Error log to be added
+        }
     });
-    return promise;
+}
+
+export const getOrderList = function (request) {
+    return getOrders(request);
+}
+
+export const getAutoOrderList = function (request) {
+    return getAutoOrders(request);
 }
