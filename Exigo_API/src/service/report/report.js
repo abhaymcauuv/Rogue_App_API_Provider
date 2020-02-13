@@ -24,15 +24,15 @@ export const getCustomerDetails = function (id, customerId) {
     return new Promise(async (resolve, reject) => {
         try {
             let response = {
+                Customer: {},
             };
             const period = await getCurrentPeriod(constants.PeriodTypes.Default);
             const periodId = Number(period.PeriodID);
 
             response.Customer = await getCustomer(id, periodId);
-            //  response.StartDate = response.Customer.Date1;
-            response.IsDistributor = Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.Distributor || Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.D2C;
+            let isDistributor = Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.Distributor || Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.D2C;
 
-            if (response.IsDistributor) {
+            if (isDistributor) {
                 response.Volumes = await getCustomerVolumes({
                     CustomerID: id,
                     PeriodTypeID: constants.PeriodTypes.Default,
