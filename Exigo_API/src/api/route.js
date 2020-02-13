@@ -36,6 +36,5 @@ export const routes = [
     { method: 'POST', path: '/orderlist', handler: orderList },
     { method: 'POST', path: '/autoorderlist', handler: autoOrderList }
 ]
-
 export default routes;
 

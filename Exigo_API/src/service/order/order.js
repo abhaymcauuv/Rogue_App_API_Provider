@@ -285,7 +285,7 @@ export const getCustomerOrders = function (request) {
  */
 export const getOrders = function (request) {
     const promise = new Promise(async (resolve, reject) => {
-        let sortText = 'Order by OrderDate';
+        let sortText = 'Order by OrderDate DESC';
         if (request.SortName && request.SortOrder) {
             sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
         }

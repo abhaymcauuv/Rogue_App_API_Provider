@@ -178,7 +178,7 @@ export const getCustomer = function (customerID, periodId) {
         ,c.MailZip
         ,c.MailCountry
         ,c.MailCounty
-        ,OtherAddress1 = c.OtherAddress1 +' '+ c.OtherAddress2 +' '+ c.OtherAddress3
+        ,OtherAddress = c.OtherAddress1 +' '+ c.OtherAddress2 +' '+ c.OtherAddress3
         ,c.OtherCity
         ,c.OtherState
         ,c.OtherZip

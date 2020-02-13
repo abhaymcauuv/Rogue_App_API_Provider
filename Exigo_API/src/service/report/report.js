@@ -14,6 +14,12 @@ export const getCustomerList = function (request) {
     return getCustomers(request);
 }
 
+/**
+ * Get Customer Details
+ * @param CustomerID
+ * @param ID
+ * @returns Customer Details
+ */
 export const getCustomerDetails = function (id, customerId) {
     return new Promise(async (resolve, reject) => {
         try {
