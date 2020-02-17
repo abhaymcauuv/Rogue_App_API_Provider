@@ -9,94 +9,10 @@ import sql from 'mssql';
 import { executeQuery } from '../../db/mssql';
 import * as constants from '../../common/constant';
 
-
-/**
- * Get Customers 
- * @param CustomerID
- * @param PageSize
- * @param PageNo
- * @param IsCount
- * @param SortName
- * @param SortOrder
- * @param SearchData
- * @returns Customers
- */
-export const getCustomers = function (request) {
-    const promise = new Promise(async (resolve, reject) => {
-        const customerTypes = [
-            constants.CustomerTypes.RetailCustomer,
-            constants.CustomerTypes.PreferredCustomer
-        ];
-
-        let searchText = '';
-        if (request.SearchData) {
-            searchText = "AND ( o.CustomerID like '" + request.SearchData + "%' OR c.MainAddress1 like '" + request.SearchData + "%' OR c.FirstName like '" + request.SearchData + "%' OR c.LastName like '" + request.SearchData + "%' OR c.LoginName like '" + request.SearchData + "%' OR c.Phone like '" + request.SearchData + "%')";
-        }
-
-        let sortText = 'Order by CustomerID';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `SELECT DISTINCT
-                            [CustomerID] = o.CustomerID
-                          , [CustomerName] = c.FirstName + ' ' + c.LastName
-                          , [Email] = c.LoginName
-                          , [Phone] = c.Phone
-                          , [Address] = c.MainAddress1
-                          , City
-                          , State
-                          , Country
-                     FROM[Orders] AS o
-                          INNER JOIN Customers AS c ON c.CustomerID = o.CustomerID
-                          WHERE
-                          c.CustomerTypeID IN(${ customerTypes})
-                          AND
-                          o.Other14 = CAST(@customerId AS NVARCHAR(200))
-                          ${searchText} 
-                          ${ sortText} `;
-
-        let params = [
-            {
-                Name: 'customerId',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            }
-        ];
-
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
-
-        let noOfCustomer = 0;
-        if (!request.IsCount) {
-            let countQuery = ` SELECT COUNT(CustomerID) as customers
-                                 FROM(SELECT DISTINCT
-                                    [CustomerID] = o.CustomerID
-                                  , [CustomerName] = c.FirstName + ' ' + c.LastName
-                                  , [Email] = c.LoginName
-                                  , [Phone] = c.Phone
-                                  , [Address] = c.MainAddress1
-                                  , City
-                                  , State
-                                  , Country
-                                    FROM[Orders] AS o
-                                        INNER JOIN Customers AS c ON c.CustomerID = o.CustomerID
-                                    WHERE
-                                         c.CustomerTypeID IN(${customerTypes})
-                                         AND
-                                         o.Other14 = CAST(@customerId  AS NVARCHAR(200))
-                                    ${searchText}) as dt`;
-
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfCustomer = res.length > 0 ? res[0].customers : 0
-        }
-        return resolve({ "Customers": resData, "Count": noOfCustomer });
-
-    });
-    return promise;
-}
-
 /**
  * Get Customer 
  * @param CustomerID
+ * @param PeriodID
  * @returns Customer
  */
 export const getCustomer = function (customerID, periodId) {
@@ -212,6 +128,7 @@ WHERE c.CustomerID = @CustomerID`;
 /**
  * Get Customer 
  * @param CustomerID
+ * @param PeriodID
  * @returns Customer
  */
 export const isCustomerActive = function (customerId, periodId) {
@@ -251,7 +168,6 @@ export const isCustomerActive = function (customerId, periodId) {
     return promise;
 }
 
-
 const quarter = async function (periodId) {
     const currentPeriodID = periodId
     const quarterYear = (periodId / 12) + 2017;
@@ -267,36 +183,64 @@ const quarter = async function (periodId) {
     })
 }
 
-
-
 /**
- * Get Customer 
+ * Get Customer's Recent Activity 
  * @param CustomerID
- * @returns Customer
+ * @param StartDate
+ * @returns  Customer's Recent Activity 
  */
-export const isCustomerInEnrollerDownline = function (customerId, id) {
+export const getCustomerRecentActivity = function (request) {
     const promise = new Promise(async (resolve, reject) => {
-        let query = `SELECT TOP 1
-                                  d.CustomerID	
-                                FROM
-                                  EnrollerDownline d
-                                WHERE
-                                  d.DownlineCustomerID = @topcustomerID    
-                                  AND d.CustomerID = @customerid`;
+        let query = `DECLARE @CW TABLE 
+                            ( 
+                              CustomerWallItemID int NOT NULL, 
+                              CustomerID int NOT NULL, 
+                              EntryDate datetime, 
+                              Text varchar(100), 
+                              OrderID int , 
+                              Field1 varchar(20), 
+                              Field2 varchar(20), 
+                              Field3 varchar(20)
+                            ) 
+                        INSERT INTO @CW (CustomerWallItemID, CustomerID, EntryDate, Text, OrderID, Field1, Field2, Field3)
+                        SELECT top 30 [CustomerWallItemID]
+                                      ,cw.CustomerID
+                                      ,[EntryDate]
+                                      ,[Text]
+                                      ,(select SUBSTRING(Text,CHARINDEX('[',Text)+1,CHARINDEX(']',Text)-CHARINDEX('[',Text)-1) where Text Like '%].') as OrderID
+                                      ,[Field1]
+                                      ,[Field2]
+                                      ,[Field3]
+                                FROM CustomerWall cw 
+                                     Where cw.CustomerID=@CustomerID
+                                     and EntryDate > DATEADD(month, -2, GETDATE())
+                                Order by EntryDate Desc
+                                Select c.* from @CW c inner join Orders o on o.OrderID = c.OrderID 
+                                inner join Customers cu on cu.CustomerID = o.CustomerID  where c.OrderID not in (
+                                Select top 500 OrderID from Orders o where o.OrderTypeID = 4 and o.OrderID in (SELECT OrderID from @CW)) and cu.CustomerTypeID = @CustomerTypeID`;
         let params = [
             {
-                Name: 'topcustomerID',
+                Name: 'CustomerID',
                 Type: sql.BigInt,
-                Value: customerId
+                Value: request.CustomerID
             },
             {
-                Name: 'customerid',
+                Name: 'CustomerTypeID',
                 Type: sql.BigInt,
-                Value: id
+                Value: constants.CustomerTypes.Distributor
             }
         ];
+
         let resData = await executeQuery({ SqlQuery: query, SqlParams: params });
-        return resolve(resData.length > 0 ? true : false);
+        if (request.StartDate && resData.length > 0) {
+            resData = resData.filter(c => new Date(c.EntryDate) >= new Date(request.StartDate)).ToList();
+        }
+        return resolve(resData);
     });
     return promise;
 }
+
+
+
+
+
