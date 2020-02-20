@@ -11,7 +11,7 @@ import { getCustomerVolumes } from '../volume/volume';
 import * as constants from '../../common/constant';
 import { getCurrentPeriod } from '../period/period';
 import { isCustomerInEnrollerDownline } from '../Tree/tree';
-import { getRanks } from '../rank/rank';
+import { getRanks, getCustomerRankQualifications } from '../rank/rank';
 
 /**
  * Get Customer List
@@ -113,7 +113,7 @@ export const getCustomerDetails = function (id, customerId) {
             const periodId = Number(period.PeriodID);
 
             response.Customer = await getCustomer(id, periodId);
-          
+
             let isDistributor = Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.Distributor || Number(response.Customer.CustomerTypeID) == constants.CustomerTypes.D2C;
             response.IsDistributor = isDistributor;
             if (isDistributor) {
@@ -337,6 +337,7 @@ export const getClubCoutureCustomerList = function (request) {
 
         let query = `Select * From(Select distinct
                              c.CustomerID as CustomerID
+                            ,c.CustomerTypeID
                             ,c.FirstName + ' ' + c.LastName as CustomerName
                             ,c.Email as Email
                             ,c.Phone as Phone
@@ -503,7 +504,7 @@ export const getRankAdvancement = function (customerId) {
         const periodTypeId = Number(period.PeriodTypeID);
 
         let query = `SELECT 
-                       ISNULL(pv.PaidRankID, 1)	
+                       ISNULL(pv.PaidRankID, 1) as PaidRankID
                      FROM
                        PeriodVolumes pv		                            
                     WHERE pv.CustomerID = @customerid
@@ -520,8 +521,7 @@ export const getRankAdvancement = function (customerId) {
                 Name: 'periodtypeid',
                 Type: sql.BigInt,
                 Value: periodTypeId
-            }
-            ,
+            },
             {
                 Name: 'periodid',
                 Type: sql.BigInt,
@@ -530,20 +530,22 @@ export const getRankAdvancement = function (customerId) {
         ];
 
         let resData = await executeQuery({ SqlQuery: query, SqlParams: params });
-        let result = resData.length > 0 ? resData[0] : 0;
-
+        let result = resData.length > 0 ? Number(resData[0].PaidRankID) : 0;
         let paidRankID = 1;
         if (result > 0) {
             paidRankID = result;
         }
 
         let ranks = await getRanks();
-        if (Number(ranks[ranks.length - 1].RankID) != paidRankID) {
-            let paidRank = ranks.find(r => Number(r.RankID) > paidRankID);
-            paidRankID = Number(paidRank.RankID);
+        if (ranks.length > 0) {
+            if (Number(ranks[ranks.length - 1].RankID) != paidRankID) {
+                let paidRank = ranks.find(r => Number(r.RankID) > paidRankID);
+                paidRankID = Number(paidRank.RankID);
+            }
         }
 
-        return resolve();
+        let qualification = await getCustomerRankQualifications({ CustomerID: customerId, RankID: paidRankID })
+        return resolve(qualification);
     });
 }
 

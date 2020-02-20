@@ -78,7 +78,7 @@ export const getRealTimeCommissions = function (customerid) {
                     bonuses.forEach(function (data, index) {
                         let bonus = {
                             Description: data.Description,
-                            Amount:  data.Amount,
+                            Amount: data.Amount,
                             BonusID: data.BonusID,
                         }
                         commission.Bonuses.push(bonus);
@@ -154,7 +154,7 @@ export const getRealTimeCommissionDetails = function (cId, pTypeId, pId, bId) {
         const { body, statusCode } = response;
         const result = await transform(response.body, template);
         var resData = "";
-        
+
         if (result.CommissionDetailsResult.length > 0) {
             const commissionDetailsResult = result.CommissionDetailsResult[0].CommissionDetails;
             commissionDetailsResult.forEach(function (detail, index) {
@@ -179,4 +179,122 @@ export const getRealTimeCommissionDetails = function (cId, pTypeId, pId, bId) {
         return resolve(commissionDetails);
     });
     return promise;
+}
+
+
+export const getRankQualifications = function (request) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let RankQualifications = {};
+
+            const headers = {
+                'Content-Type': 'text/xml;charset=UTF-8',
+                'soapAction': 'http://api.exigo.com/GetRankQualifications',
+            };
+
+            const xml = `<soap:Envelope 
+                                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                                   xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                                   xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                            ${constants.SoapHeader}
+                            <soap:Body>
+                                <GetRankQualificationsRequest xmlns="http://api.exigo.com/">
+                                    <CustomerID>${request.CustomerID}</CustomerID>
+                                    <RankID>${request.RankID}</RankID>
+                                    <PeriodType>${request.PeriodType}</PeriodType>
+                                </GetRankQualificationsRequest>
+                            </soap:Body>
+                        </soap:Envelope>`;
+
+            const template = {
+                RankQualificationsResult: ["//GetRankQualificationsResult", {
+                    Result: ["//Result", {
+                        Status: "Status",
+                        Errors: "Errors",
+                        TransactionKey: "TransactionKey"
+                    }],
+                    CustomerID: "CustomerID",
+                    RankID: "RankID",
+                    RankDescription: "RankDescription",
+                    Qualifies: "Qualifies",
+                    QualifiesOverride: "QualifiesOverride",
+                    PayeeQualificationLegs: ["PayeeQualificationLegs/ArrayOfQualificationResponse", {
+                        QualificationResponse: ["QualificationResponse", {
+                            QualificationDescription: "QualificationDescription",
+                            Required: "Required",
+                            Actual: "Actual",
+                            Qualifies: "Qualifies",
+                            QualifiesOverride: "QualifiesOverride",
+                            Completed: "Completed",
+                            Weight: "Weight",
+                            Score: "Score"
+                        }]
+                    }],
+                    BackRankID: "BackRankID",
+                    BackRankDescription: "BackRankDescription",
+                    NextRankID: "NextRankID",
+                    NextRankDescription: "NextRankDescription",
+                    Score: "Score"
+                }]
+            };
+
+            const errortemplate = {
+                CustomerResult: ["//faultcode ", {
+                    faultstring: "//faultstring"
+                }]
+            };
+
+            const url = 'http://sandboxapi3.exigo.com/3.0/ExigoApi.asmx?WSDL?op=GetRankQualifications';
+
+            const { response } = await soapRequest({ url: url, headers: headers, xml: xml, timeout: 100000 });
+            const { body, statusCode } = response;
+            const result = await transform(response.body, template);
+            let resData = "";
+            if (result.RankQualificationsResult.length > 0) {
+                const qualificationsResult = result.RankQualificationsResult[0];
+                let rankQualifications = {
+                    CustomerID: qualificationsResult.CustomerID,
+                    RankID: qualificationsResult.RankID,
+                    RankDescription: qualificationsResult.RankDescription,
+                    Qualifies: (qualificationsResult.Qualifies) ? (qualificationsResult.Qualifies == "true" ? true : false) : false,
+                    QualifiesOverride: (qualificationsResult.QualifiesOverride) ? (qualificationsResult.QualifiesOverride == "true" ? true : false) : false,
+                    BackRankID: qualificationsResult.BackRankID,
+                    BackRankDescription: qualificationsResult.BackRankDescription,
+                    NextRankID: qualificationsResult.NextRankID,
+                    NextRankDescription: qualificationsResult.NextRankDescription,
+                    Score: qualificationsResult.Score,
+                    PayeeQualificationLegs: []
+                }
+
+                let payeeQualificationLegs = []
+                qualificationsResult.PayeeQualificationLegs.forEach((data, index) => {
+                    let ArrayOfQualification = [];
+                    data.QualificationResponse.forEach((d, i) => {
+                        let Qualification = {
+                            QualificationDescription: d.QualificationDescription,
+                            Required: d.Required,
+                            Actual: d.Actual,
+                            Qualifies: (d.Qualifies) ? (d.Qualifies == "true" ? true : false) : false,
+                            QualifiesOverride: (d.QualifiesOverride) ? (d.QualifiesOverride == "true" ? true : false) : false,
+                            Completed: d.Completed,
+                            Weight: d.Weight,
+                            Score: d.Score
+                        };
+                        ArrayOfQualification.push(Qualification);
+                    });
+                    payeeQualificationLegs.push(ArrayOfQualification);
+                })
+                rankQualifications.PayeeQualificationLegs = payeeQualificationLegs;
+                RankQualifications = rankQualifications;
+            }
+            else {
+                const errresult = await transform(response.body, errortemplate);
+                resData = errresult.CustomerResult[0].faultstring
+            }
+            return resolve(RankQualifications);
+        }
+        catch (err) {
+            throw err
+        }
+    });
 }

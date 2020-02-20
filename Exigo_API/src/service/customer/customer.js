@@ -34,6 +34,7 @@ export const getCustomer = function (customerID, periodId) {
         ,c.LoginName
         ,c.PasswordHash
         ,c.RankID
+        ,RankDescription =(select top 1 RankDescription from Ranks where RankID = c.RankID)
         ,RecongnitionRankID = (SELECT Max(pv.PaidRankID) from PeriodVolumes pv where pv.CustomerID = @CustomerID  AND ((((@PeriodID - 1) / 3) * 3) + -2)  <= pv.PeriodID AND @PeriodID >= pv.PeriodID)
         ,c.EnrollerID
         ,c.SponsorID
