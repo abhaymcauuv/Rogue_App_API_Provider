@@ -2,7 +2,7 @@
  * Description : route information
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 1st Feb 2020
+ * Last modified : 12th Feb 2020
  */
 
 import {
@@ -15,7 +15,14 @@ import {
     historicalCommissions,
     realTimeBonusDetails,
     historicalBonusDetails,
-    customerList
+    customerList,
+    customerDetails,
+    orderList,
+    autoOrderList,
+    clubCoutureCustomerList,
+    activity,
+    volumesList,
+    rankAdvancement
 } from './index';
 
 export const routes = [
@@ -28,8 +35,14 @@ export const routes = [
     { method: 'GET', path: '/historicalcommissions/{customerid}/{runid}', handler: historicalCommissions },
     { method: 'POST', path: '/realtimebonusdetails', handler: realTimeBonusDetails },
     { method: 'POST', path: '/historicalbonusdetails', handler: historicalBonusDetails },
-    { method: 'POST', path: '/customerlist', handler: customerList }
+    { method: 'POST', path: '/customerlist', handler: customerList },
+    { method: 'POST', path: '/customerdetails', handler: customerDetails },
+    { method: 'POST', path: '/orderlist', handler: orderList },
+    { method: 'POST', path: '/autoorderlist', handler: autoOrderList },
+    { method: 'POST', path: '/clubcouturecustomerlist', handler: clubCoutureCustomerList },
+    { method: 'GET', path: '/activity/{id}', handler: activity },
+    { method: 'POST', path: '/volumes', handler: volumesList },
+    { method: 'GET', path: '/rankadvancement/{id}', handler: rankAdvancement },
 ]
-
 export default routes;
 

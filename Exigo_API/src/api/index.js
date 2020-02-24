@@ -2,7 +2,7 @@
  * Description : 
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 1st Feb 2020
+ * Last modified : 15th Feb 2020
  */
 import {
     getCustomerRealTimeCommissions,
@@ -14,7 +14,16 @@ import {
     getHistoricalBonusDetails
 } from '../service/commission/commission';
 import { getCurrentPeriod, getPeriods } from '../service/period/period';
-import { getCustomerList } from '../service/report/report';
+import {
+    getCustomerList,
+    getCustomerDetails,
+    getOrderList,
+    getAutoOrderList,
+    getClubCoutureCustomerList,
+    getActivity,
+    getVolumesList,
+    getRankAdvancement
+} from '../service/report/report';
 
 //#region Commission
 
@@ -137,6 +146,10 @@ export const historicalBonusDetails = function (request, reply) {
  * @param CustomerID
  * @param PageSize
  * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @param SearchData
  * @returns Customer List
  */
 export const customerList = function (request, reply) {
@@ -152,6 +165,145 @@ export const customerList = function (request, reply) {
         SortOrder: request.payload.SortOrder,
         SearchData: request.payload.SearchData
     });
+}
+
+
+/**
+ * Get Customer Details
+ * @param CustomerID
+ * @param ID
+ * @returns Customer Details
+ */
+export const customerDetails = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const id = Number(request.payload.ID);
+    return getCustomerDetails(id, customerId);
+}
+
+/**
+ * Get Order List
+ * @param CustomerID
+ * @param ID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @returns Order List
+ */
+export const orderList = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const id = Number(request.payload.ID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getOrderList({
+        CustomerID: customerId,
+        ID: id,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder
+    });
+}
+
+/**
+ * Get AutoOrder List
+ * @param CustomerID
+ * @param ID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @returns AutoOrder List
+ */
+export const autoOrderList = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const id = Number(request.payload.ID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getAutoOrderList({
+        CustomerID: customerId,
+        ID: id,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder
+    });
+}
+
+/**
+ * Get Club Couture Customer List 
+ * @param CustomerID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param IncludeClosedAccounts
+ * @param SortName
+ * @param SortOrder
+ * @param SearchData
+ * @returns Club Couture Customer List 
+ */
+export const clubCoutureCustomerList = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getClubCoutureCustomerList({
+        CustomerID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        IncludeClosedAccounts: request.payload.IncludeClosedAccounts,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder,
+        SearchData: request.payload.SearchData
+    });
+}
+
+/**
+ * Get Customer's Recent Activity 
+ * @param CustomerID
+ * @returns  Customer's Recent Activity 
+ */
+export const activity = function (request, reply) {
+    const customerId = Number(request.params.id);
+    return getActivity(customerId);
+}
+
+/**
+ * Get Volumes List
+ * @param ID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @returns Volumes List
+ */
+export const volumesList = function (request, reply) {
+    const customerId = Number(request.payload.ID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getVolumesList({
+        ID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder
+    });
+}
+
+/**
+ * Get Rank Advancement
+ * @param ID
+ * @returns Rank Advancement
+ */
+export const rankAdvancement = function (request, reply) {
+    const customerId = Number(request.params.id);
+    return getRankAdvancement(customerId);
 }
 
 //#endregion

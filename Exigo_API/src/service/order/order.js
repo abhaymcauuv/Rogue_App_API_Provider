@@ -2,10 +2,11 @@
  * Description :  To get order details
  * Created By : Abhay
  * Modified By : Abhay
- * Last modified : 31st Jan 2020
+ * Last modified : 12th Feb 2020
  */
 import sql from 'mssql';
 import { executeQuery } from '../../db/mssql';
+import * as constants from '../../common/constant';
 
 export const getCustomerOrders = function (request) {
     const customerID = Number(request.CustomerID)
@@ -266,7 +267,9 @@ export const getCustomerOrders = function (request) {
             return resolve(CustomerOrdersResponse);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }
+
