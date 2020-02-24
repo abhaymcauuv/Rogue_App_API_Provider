@@ -26,21 +26,22 @@ import { getRanks, getCustomerRankQualifications } from '../rank/rank';
  */
 export const getCustomerList = function (request) {
     return new Promise(async (resolve, reject) => {
-        const customerTypes = [
-            constants.CustomerTypes.RetailCustomer,
-            constants.CustomerTypes.PreferredCustomer
-        ];
+        try {
+            const customerTypes = [
+                constants.CustomerTypes.RetailCustomer,
+                constants.CustomerTypes.PreferredCustomer
+            ];
 
-        let searchText = '';
-        if (request.SearchData) {
-            searchText = "AND ( o.CustomerID like '" + request.SearchData + "%' OR c.MainAddress1 like '" + request.SearchData + "%' OR c.FirstName like '" + request.SearchData + "%' OR c.LastName like '" + request.SearchData + "%' OR c.LoginName like '" + request.SearchData + "%' OR c.Phone like '" + request.SearchData + "%')";
-        }
+            let searchText = '';
+            if (request.SearchData) {
+                searchText = "AND ( o.CustomerID like '" + request.SearchData + "%' OR c.MainAddress1 like '" + request.SearchData + "%' OR c.FirstName like '" + request.SearchData + "%' OR c.LastName like '" + request.SearchData + "%' OR c.LoginName like '" + request.SearchData + "%' OR c.Phone like '" + request.SearchData + "%')";
+            }
 
-        let sortText = 'Order by CustomerID';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `SELECT DISTINCT
+            let sortText = 'Order by CustomerID';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+            let query = `SELECT DISTINCT
                             [CustomerID] = o.CustomerID
                           , [CustomerName] = c.FirstName + ' ' + c.LastName
                           , [Email] = c.LoginName
@@ -58,19 +59,19 @@ export const getCustomerList = function (request) {
                           ${searchText} 
                           ${ sortText} `;
 
-        let params = [
-            {
-                Name: 'customerId',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            }
-        ];
+            let params = [
+                {
+                    Name: 'customerId',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
 
-        let noOfCustomer = 0;
-        if (!request.IsCount) {
-            let countQuery = ` SELECT COUNT(CustomerID) as customers
+            let noOfCustomer = 0;
+            if (!request.IsCount) {
+                let countQuery = ` SELECT COUNT(CustomerID) as customers
                                  FROM(SELECT DISTINCT
                                     [CustomerID] = o.CustomerID
                                   , [CustomerName] = c.FirstName + ' ' + c.LastName
@@ -88,10 +89,15 @@ export const getCustomerList = function (request) {
                                          o.Other14 = CAST(@customerId  AS NVARCHAR(200))
                                     ${searchText}) as dt`;
 
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfCustomer = res.length > 0 ? res[0].customers : 0
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfCustomer = res.length > 0 ? res[0].customers : 0
+            }
+            return resolve({ "Customers": resData, "Count": noOfCustomer });
         }
-        return resolve({ "Customers": resData, "Count": noOfCustomer });
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -148,7 +154,8 @@ export const getCustomerDetails = function (id, customerId) {
             return resolve(response);
         }
         catch (err) {
-            throw err;//TODO:Error log to be added
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
         }
     });
 }
@@ -166,11 +173,12 @@ export const getCustomerDetails = function (id, customerId) {
  */
 export const getOrderList = function (request) {
     return new Promise(async (resolve, reject) => {
-        let sortText = 'Order by OrderDate DESC';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `Select
+        try {
+            let sortText = 'Order by OrderDate DESC';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+            let query = `Select
                       o.OrderDate
                     , CountryCode = o.Country
                     , o.CurrencyCode
@@ -185,39 +193,44 @@ export const getOrderList = function (request) {
                     AND ((ud.downlinecustomerid = @designerid AND (o.PriceTypeID = 3 OR (o.BusinessVolumeTotal = 0 AND o.other14 = ''))) OR (o.PriceTypeID IN (1, 2) AND o.other14 = @designerid))
                     ${sortText}`;
 
-        let params = [
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: request.ID
-            },
-            {
-                Name: 'designerid',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            },
-            {
-                Name: 'orderstatus',
-                Type: sql.BigInt,
-                Value: constants.OrderStatuses.Accepted
-            }
-        ];
+            let params = [
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: request.ID
+                },
+                {
+                    Name: 'designerid',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                },
+                {
+                    Name: 'orderstatus',
+                    Type: sql.BigInt,
+                    Value: constants.OrderStatuses.Accepted
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
 
-        let noOfOrders = 0;
-        if (!request.IsCount) {
-            let countQuery = `Select count(o.OrderID) as orders
+            let noOfOrders = 0;
+            if (!request.IsCount) {
+                let countQuery = `Select count(o.OrderID) as orders
                                         FROM Orders o
                                         LEFT JOIN unileveldownline ud WITH (nolock)
                                         ON o.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
                                         WHERE o.CustomerID = @customerid AND o.OrderStatusID >= @orderstatus
                                         AND ((ud.downlinecustomerid = @designerid AND (o.PriceTypeID = 3 OR (o.BusinessVolumeTotal = 0 AND o.other14 = ''))) OR (o.PriceTypeID IN (1, 2) AND o.other14 = @designerid))`;
 
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfOrders = res.length > 0 ? res[0].orders : 0
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfOrders = res.length > 0 ? res[0].orders : 0
+            }
+            return resolve({ "Orders": resData, "Count": noOfOrders });
         }
-        return resolve({ "Orders": resData, "Count": noOfOrders });
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -234,11 +247,12 @@ export const getOrderList = function (request) {
  */
 export const getAutoOrderList = function (request) {
     return new Promise(async (resolve, reject) => {
-        let sortText = 'Order by AutoOrderID';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `Select ao.AutoOrderID
+        try {
+            let sortText = 'Order by AutoOrderID';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+            let query = `Select ao.AutoOrderID
                           , CountryCode = ao.Country
                           , ao.CurrencyCode
                           , ao.StartDate
@@ -253,38 +267,43 @@ export const getAutoOrderList = function (request) {
                            WHERE ao.CustomerID = @customerid AND ao.AutoOrderStatusID = @autoorderstatus AND (ud.downlinecustomerid = @designerid OR ao.other14 = @designerid)
                            ${sortText}`;
 
-        let params = [
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: request.ID
-            },
-            {
-                Name: 'designerid',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            },
-            {
-                Name: 'autoorderstatus',
-                Type: sql.BigInt,
-                Value: 0
-            }
-        ];
+            let params = [
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: request.ID
+                },
+                {
+                    Name: 'designerid',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                },
+                {
+                    Name: 'autoorderstatus',
+                    Type: sql.BigInt,
+                    Value: 0
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
 
-        let noOfAutoOrders = 0;
-        if (!request.IsCount) {
-            let countQuery = `Select count(ao.AutoOrderID) as autoorders
+            let noOfAutoOrders = 0;
+            if (!request.IsCount) {
+                let countQuery = `Select count(ao.AutoOrderID) as autoorders
                                      From AutoOrders ao
                                      LEFT JOIN unileveldownline ud WITH (nolock)
                                      ON ao.CustomerID = ud.customerid AND ud.downlinecustomerid = @designerid
                                      WHERE ao.CustomerID = @customerid AND ao.AutoOrderStatusID = @autoorderstatus AND (ud.downlinecustomerid = @designerid OR ao.other14 = @designerid)`;
 
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfAutoOrders = res.length > 0 ? res[0].autoorders : 0;
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfAutoOrders = res.length > 0 ? res[0].autoorders : 0;
+            }
+            return resolve({ "AutoOrders": resData, "Count": noOfAutoOrders });
         }
-        return resolve({ "AutoOrders": resData, "Count": noOfAutoOrders });
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -302,40 +321,41 @@ export const getAutoOrderList = function (request) {
  */
 export const getClubCoutureCustomerList = function (request) {
     return new Promise(async (resolve, reject) => {
-        let customerStatus = [
-            constants.CustomerStatuses.Active
-        ];
-
-        let customerTypes = [
-            constants.CustomerTypes.PreferredCustomer,
-            constants.CustomerTypes.D2C
-        ];
-
-        if (request.IncludeClosedAccounts) {
-            customerStatus = [
-                constants.CustomerStatuses.Active,
-                constants.CustomerStatuses.Terminated,
-                constants.CustomerStatuses.Paused
+        try {
+            let customerStatus = [
+                constants.CustomerStatuses.Active
             ];
 
-            customerTypes = [
+            let customerTypes = [
                 constants.CustomerTypes.PreferredCustomer,
-                constants.CustomerTypes.RetailCustomer,
                 constants.CustomerTypes.D2C
-            ]
-        }
+            ];
 
-        let searchText = '';
-        if (request.SearchData) {
-            searchText = "AND (CustomerID like '" + request.SearchData + "%' OR Address like '" + request.SearchData + "%' OR CustomerName like '" + request.SearchData + "%'  OR Email like '" + request.SearchData + "%' OR Phone like '" + request.SearchData + "%')";
-        }
+            if (request.IncludeClosedAccounts) {
+                customerStatus = [
+                    constants.CustomerStatuses.Active,
+                    constants.CustomerStatuses.Terminated,
+                    constants.CustomerStatuses.Paused
+                ];
 
-        let sortText = 'ORDER By JoinDate DESC';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
+                customerTypes = [
+                    constants.CustomerTypes.PreferredCustomer,
+                    constants.CustomerTypes.RetailCustomer,
+                    constants.CustomerTypes.D2C
+                ]
+            }
 
-        let query = `Select * From(Select distinct
+            let searchText = '';
+            if (request.SearchData) {
+                searchText = "AND (CustomerID like '" + request.SearchData + "%' OR Address like '" + request.SearchData + "%' OR CustomerName like '" + request.SearchData + "%'  OR Email like '" + request.SearchData + "%' OR Phone like '" + request.SearchData + "%')";
+            }
+
+            let sortText = 'ORDER By JoinDate DESC';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+
+            let query = `Select * From(Select distinct
                              c.CustomerID as CustomerID
                             ,c.CustomerTypeID
                             ,c.FirstName + ' ' + c.LastName as CustomerName
@@ -362,19 +382,19 @@ export const getClubCoutureCustomerList = function (request) {
                              Where a.rownumber = 1 ${searchText}
                              ${sortText}`;
 
-        let params = [
-            {
-                Name: 'customerId',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            }
-        ];
+            let params = [
+                {
+                    Name: 'customerId',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
 
-        let noOfCustomer = 0;
-        if (!request.IsCount) {
-            let countQuery = `SELECT COUNT(CustomerID) as customers from (Select * From ( Select distinct
+            let noOfCustomer = 0;
+            if (!request.IsCount) {
+                let countQuery = `SELECT COUNT(CustomerID) as customers from (Select * From ( Select distinct
                                  c.CustomerID as CustomerID
                                 ,c.FirstName + ' ' + c.LastName as CustomerName
                                 ,c.Email as Email
@@ -390,10 +410,15 @@ export const getClubCoutureCustomerList = function (request) {
                                    Where a.rownumber = 1 ${searchText}
                 )as dt`;
 
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfCustomer = res.length > 0 ? res[0].customers : 0
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfCustomer = res.length > 0 ? res[0].customers : 0
+            }
+            return resolve({ "ClubCoutureCustomers": resData, "Count": noOfCustomer });
         }
-        return resolve({ "ClubCoutureCustomers": resData, "Count": noOfCustomer });
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -404,11 +429,17 @@ export const getClubCoutureCustomerList = function (request) {
  */
 export const getActivity = function (customerId) {
     return new Promise(async (resolve, reject) => {
-        let customerActivities = await getCustomerRecentActivity({ CustomerID: customerId });
-        if (customerActivities.length > 0) {
-            customerActivities = customerActivities.sort((a, b) => new Date(b.EntryDate) - new Date(a.EntryDate));
+        try {
+            let customerActivities = await getCustomerRecentActivity({ CustomerID: customerId });
+            if (customerActivities.length > 0) {
+                customerActivities = customerActivities.sort((a, b) => new Date(b.EntryDate) - new Date(a.EntryDate));
+            }
+            return resolve(customerActivities);
         }
-        return resolve(customerActivities);
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -424,11 +455,12 @@ export const getActivity = function (customerId) {
  */
 export const getVolumesList = function (request) {
     return new Promise(async (resolve, reject) => {
-        let sortText = 'Order by StartDate';
-        if (request.SortName && request.SortOrder) {
-            sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
-        }
-        let query = `SELECT  
+        try {
+            let sortText = 'Order by StartDate';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+            let query = `SELECT  
                           p.PeriodID
                         , p.StartDate
                         , p.EndDate
@@ -454,24 +486,24 @@ export const getVolumesList = function (request) {
                         WHERE c.CustomerID = @customerid
                     ${sortText}`;
 
-        let params = [
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: request.ID
-            },
-            {
-                Name: 'periodtype',
-                Type: sql.BigInt,
-                Value: constants.PeriodTypes.Default
-            }
-        ];
+            let params = [
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: request.ID
+                },
+                {
+                    Name: 'periodtype',
+                    Type: sql.BigInt,
+                    Value: constants.PeriodTypes.Default
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
 
-        let noOfVolumes = 0;
-        if (!request.IsCount) {
-            let countQuery = `SELECT count(p.PeriodID) as volumes
+            let noOfVolumes = 0;
+            if (!request.IsCount) {
+                let countQuery = `SELECT count(p.PeriodID) as volumes
                                      FROM Customers c
                                           INNER JOIN Periods p
                                           ON dateadd(day, 1, p.EndDate) > c.Date1
@@ -485,10 +517,15 @@ export const getVolumesList = function (request) {
                                           ON r.RankID = pv.PaidRankID
                                           WHERE c.CustomerID = @customerid`;
 
-            let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-            noOfVolumes = res.length > 0 ? res[0].volumes : 0
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfVolumes = res.length > 0 ? res[0].volumes : 0;
+            }
+            return resolve({ "Volumes": resData, "Count": noOfVolumes });
         }
-        return resolve({ "Volumes": resData, "Count": noOfVolumes });
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 
@@ -499,11 +536,12 @@ export const getVolumesList = function (request) {
  */
 export const getRankAdvancement = function (customerId) {
     return new Promise(async (resolve, reject) => {
-        const period = await getCurrentPeriod(constants.PeriodTypes.Default);
-        const periodId = Number(period.PeriodID);
-        const periodTypeId = Number(period.PeriodTypeID);
+        try {
+            const period = await getCurrentPeriod(constants.PeriodTypes.Default);
+            const periodId = Number(period.PeriodID);
+            const periodTypeId = Number(period.PeriodTypeID);
 
-        let query = `SELECT 
+            let query = `SELECT 
                        ISNULL(pv.PaidRankID, 1) as PaidRankID
                      FROM
                        PeriodVolumes pv		                            
@@ -511,41 +549,46 @@ export const getRankAdvancement = function (customerId) {
                        AND pv.PeriodTypeID = @periodtypeid
                        AND pv.PeriodID = @periodid`;
 
-        let params = [
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: customerId
-            },
-            {
-                Name: 'periodtypeid',
-                Type: sql.BigInt,
-                Value: periodTypeId
-            },
-            {
-                Name: 'periodid',
-                Type: sql.BigInt,
-                Value: periodId
+            let params = [
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: customerId
+                },
+                {
+                    Name: 'periodtypeid',
+                    Type: sql.BigInt,
+                    Value: periodTypeId
+                },
+                {
+                    Name: 'periodid',
+                    Type: sql.BigInt,
+                    Value: periodId
+                }
+            ];
+
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params });
+            let result = resData.length > 0 ? Number(resData[0].PaidRankID) : 0;
+            let paidRankID = 1;
+            if (result > 0) {
+                paidRankID = result;
             }
-        ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params });
-        let result = resData.length > 0 ? Number(resData[0].PaidRankID) : 0;
-        let paidRankID = 1;
-        if (result > 0) {
-            paidRankID = result;
-        }
-
-        let ranks = await getRanks();
-        if (ranks.length > 0) {
-            if (Number(ranks[ranks.length - 1].RankID) != paidRankID) {
-                let paidRank = ranks.find(r => Number(r.RankID) > paidRankID);
-                paidRankID = Number(paidRank.RankID);
+            let ranks = await getRanks();
+            if (ranks.length > 0) {
+                if (Number(ranks[ranks.length - 1].RankID) != paidRankID) {
+                    let paidRank = ranks.find(r => Number(r.RankID) > paidRankID);
+                    paidRankID = Number(paidRank.RankID);
+                }
             }
-        }
 
-        let qualification = await getCustomerRankQualifications({ CustomerID: customerId, RankID: paidRankID })
-        return resolve(qualification);
+            let qualification = await getCustomerRankQualifications({ CustomerID: customerId, RankID: paidRankID })
+            return resolve(qualification);
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
 }
 

@@ -38,7 +38,8 @@ export const executeQuery = async function (request) {
             return resolve(result);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }

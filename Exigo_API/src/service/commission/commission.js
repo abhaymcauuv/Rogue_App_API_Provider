@@ -18,8 +18,9 @@ import * as constants from '../../common/constant';
  * @returns Summary Commission
  */
 export const getSummaryCommissions = function (customerID) {
-    const promise = new Promise(async (resolve, reject) => {
-        let query = `SELECT
+    return new Promise(async (resolve, reject) => {
+        try {
+            let query = `SELECT
                                   hs.DesignerID
                                  ,HSStartDate = hs.Period
                                  ,hs.PaidAsTitle
@@ -42,18 +43,21 @@ export const getSummaryCommissions = function (customerID) {
                          WHERE designerid = @customerid
                          ORDER BY p.StartDate DESC`;
 
-        let params = [
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: customerID
-            }
-        ];
-        let summaryCommissionResult = await executeQuery({ SqlQuery: query, SqlParams: params });
-        return resolve(summaryCommissionResult);
-
+            let params = [
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: customerID
+                }
+            ];
+            let summaryCommissionResult = await executeQuery({ SqlQuery: query, SqlParams: params });
+            return resolve(summaryCommissionResult);
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
-    return promise;
 }
 
 /**
@@ -61,8 +65,9 @@ export const getSummaryCommissions = function (customerID) {
  * @returns Historical Commission Period 
  */
 export const getHistoricalCommissionPeriod = function () {
-    const promise = new Promise(async (resolve, reject) => {
-        let query = `SELECT cr.CommissionRunID
+    return new Promise(async (resolve, reject) => {
+        try {
+            let query = `SELECT cr.CommissionRunID
                                              ,cr.CommissionRunDescription
                                              ,cr.RunDate
                                              ,cr.AcceptedDate
@@ -83,11 +88,16 @@ export const getHistoricalCommissionPeriod = function () {
                                        --WHERE p.StartDate >= '2018-07-01'
                                        ORDER BY cr.PeriodID DESC`;
 
-        let params = [];
-        let commissionPeriodResult = await executeQuery({ SqlQuery: query, SqlParams: params });
-        return resolve(commissionPeriodResult);
+            let params = [];
+            let commissionPeriodResult = await executeQuery({ SqlQuery: query, SqlParams: params });
+            return resolve(commissionPeriodResult);
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
-    return promise;
+
 }
 
 /**
@@ -97,12 +107,13 @@ export const getHistoricalCommissionPeriod = function () {
  * @returns Historical Commissions  
  */
 export const getHistoricalCommissions = function (request) {
-    const promise = new Promise(async (resolve, reject) => {
-        let customerID = Number(request.CustomerID);
-        let commissionRunID = Number(request.CommissionRunID);
+    return new Promise(async (resolve, reject) => {
+        try {
+            let customerID = Number(request.CustomerID);
+            let commissionRunID = Number(request.CommissionRunID);
 
-        let Commission = {};
-        let historicalCommissionQuery = `SELECT c.CommissionRunID
+            let Commission = {};
+            let historicalCommissionQuery = `SELECT c.CommissionRunID
                                           ,c.CustomerID
                                           ,c.CurrencyCode
                                           ,c.Earnings
@@ -140,24 +151,24 @@ export const getHistoricalCommissions = function (request) {
                                               AND c.CommissionRunID = @commissionrunid 
                                          ORDER BY cr.periodid DESC`;
 
-        let params = [
-            {
-                Name: 'commissionrunid',
-                Type: sql.Int,
-                Value: commissionRunID
-            },
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: customerID
-            }
-        ];
+            let params = [
+                {
+                    Name: 'commissionrunid',
+                    Type: sql.Int,
+                    Value: commissionRunID
+                },
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: customerID
+                }
+            ];
 
-        let historicalCommissionResult = await executeQuery({ SqlQuery: historicalCommissionQuery, SqlParams: params });
-        let resData = historicalCommissionResult[0];
+            let historicalCommissionResult = await executeQuery({ SqlQuery: historicalCommissionQuery, SqlParams: params });
+            let resData = historicalCommissionResult[0];
 
-        if (!resData) {
-            let historicalCommissionQuery2 = `SELECT 
+            if (!resData) {
+                let historicalCommissionQuery2 = `SELECT 
                                             cr.CommissionRunDescription
                                            ,cr.PeriodTypeID
                                            ,cr.RunDate
@@ -186,24 +197,24 @@ export const getHistoricalCommissions = function (request) {
                                        WHERE cr.CommissionRunID =@commissionrunid
                                        ORDER BY cr.periodid DESC`;
 
-            let historicalCommissionResult2 = await executeQuery({ SqlQuery: historicalCommissionQuery2, SqlParams: params });
-            resData = historicalCommissionResult2[0];
-        }
+                let historicalCommissionResult2 = await executeQuery({ SqlQuery: historicalCommissionQuery2, SqlParams: params });
+                resData = historicalCommissionResult2[0];
+            }
 
-        if (resData) {
-            let volumeResponse = await getCustomerVolumes({
-                CustomerID: customerID,
-                PeriodID: resData.PeriodID,
-                PeriodTypeID: resData.PeriodTypeID,
-                VolumesToFetch: [2, 5, 6, 7, 8, 9]
-            });
-            let volume = {
-                Volume: volumeResponse
-            };
-            Commission = { ...volume };
-        }
+            if (resData) {
+                let volumeResponse = await getCustomerVolumes({
+                    CustomerID: customerID,
+                    PeriodID: resData.PeriodID,
+                    PeriodTypeID: resData.PeriodTypeID,
+                    VolumesToFetch: [2, 5, 6, 7, 8, 9]
+                });
+                let volume = {
+                    Volume: volumeResponse
+                };
+                Commission = { ...volume };
+            }
 
-        let commissionSumQuery = `SELECT 
+            let commissionSumQuery = `SELECT 
                                      SUM(CASE
                                          WHEN cd.BonusID = 5 OR cd.BonusID = 6 THEN pv.Volume2 * cd.Percentage / 100
                                          WHEN cd.BonusID = 7  THEN cd.CommissionAmount
@@ -230,23 +241,27 @@ export const getHistoricalCommissions = function (request) {
                                         AND cd.CommissionRunID = @commissionrunid
                                         AND cd.BonusID IN (1,4,5,6,7)`;
 
-        let commissionSumResult = await executeQuery({ SqlQuery: commissionSumQuery, SqlParams: params });
-        let CommissionTotalVal = {
-            TeamSum: 0,
-            UsdSum: 0,
-            CadSum: 0,
-            SavvySum: 0
-        };
-        if (commissionSumResult.length > 0) {
-            CommissionTotalVal.TeamSum = commissionSumResult[0].TeamCommissionTotal;
-            CommissionTotalVal.UsdSum = commissionSumResult[0].DeferredCommissionTotal;
-            CommissionTotalVal.SavvySum = commissionSumResult[0].SavvySellerBonusTotal;
-        }
+            let commissionSumResult = await executeQuery({ SqlQuery: commissionSumQuery, SqlParams: params });
+            let CommissionTotalVal = {
+                TeamSum: 0,
+                UsdSum: 0,
+                CadSum: 0,
+                SavvySum: 0
+            };
+            if (commissionSumResult.length > 0) {
+                CommissionTotalVal.TeamSum = commissionSumResult[0].TeamCommissionTotal;
+                CommissionTotalVal.UsdSum = commissionSumResult[0].DeferredCommissionTotal;
+                CommissionTotalVal.SavvySum = commissionSumResult[0].SavvySellerBonusTotal;
+            }
 
-        Commission = { ...Commission, ...resData, ...CommissionTotalVal };
-        return resolve(Commission);
+            Commission = { ...Commission, ...resData, ...CommissionTotalVal };
+            return resolve(Commission);
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
-    return promise;
 }
 
 
@@ -316,7 +331,8 @@ export const getHistoricalBonusDetails = function (request) {
             return resolve(result);
         }
         catch (err) {
-            throw err;//TODO:Error log to be added
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
         }
     });
 }
@@ -330,132 +346,136 @@ export const getHistoricalBonusDetails = function (request) {
  */
 export const getCustomerRealTimeCommissions = async function (request) {
     const customerID = Number(request.CustomerID);
-    const promise = new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let RealTimeCommission = [];
 
-        let RealTimeCommission = [];
-
-        //realtime commission exigo api call
-        let realTimeResponse = await getRealTimeCommissions(customerID);
-        if (realTimeResponse.Commissions.length === 0) {
-            const period = await getCurrentPeriod(constants.PeriodTypes.Default)
-            if (period) {
-                var commission = {
-                    CustomerID: customerID,
-                    PeriodType: 1,
-                    PeriodID: period.PeriodID,
-                    PeriodDescription: '',
-                    CurrencyCode: constants.CurrencyCode.US,
-                    CommissionTotal: '',
-                    Bonuses: []
-                };
-                realTimeResponse.Commissions.push(commission);
+            //realtime commission exigo api call
+            let realTimeResponse = await getRealTimeCommissions(customerID);
+            if (realTimeResponse.Commissions.length === 0) {
+                const period = await getCurrentPeriod(constants.PeriodTypes.Default)
+                if (period) {
+                    var commission = {
+                        CustomerID: customerID,
+                        PeriodType: 1,
+                        PeriodID: period.PeriodID,
+                        PeriodDescription: '',
+                        CurrencyCode: constants.CurrencyCode.US,
+                        CommissionTotal: '',
+                        Bonuses: []
+                    };
+                    realTimeResponse.Commissions.push(commission);
+                }
             }
-        }
 
-        if (realTimeResponse.Commissions.length === 0) {
+            if (realTimeResponse.Commissions.length === 0) {
+                return resolve(RealTimeCommission);
+            }
+
+            if (request.GetPeriodVolumes) {
+                let periodRequests = [];
+                let periods = [];
+                for (var i = 0; i < realTimeResponse.Commissions.length; i++) {
+                    let commissionResponse = realTimeResponse.Commissions[i];
+
+                    let periodID = commissionResponse.PeriodID;
+                    let periodTypeID = commissionResponse.PeriodType;
+
+                    let req = periodRequests.find(x => x.PeriodTypeID === periodTypeID)
+                    if (req === null || req === undefined) {
+                        periodRequests.push({
+                            PeriodTypeID: periodTypeID,
+                            PeriodIDs: [periodID]
+                        })
+                    }
+                    else {
+                        if (req.PeriodIDs.indexOf(periodID) <= -1)
+                            req.PeriodIDs.push(periodID);
+                    }
+                }
+
+                for (let pr = 0; pr < periodRequests.length; pr++) {
+                    let periodResponse = await getPeriods(periodRequests[pr])
+                    for (let period = 0; period < periodResponse.length; period++) {
+                        periods.push(periodResponse[period]);
+                    }
+                }
+
+                let volumes = [];
+
+                for (let p = 0; p < periods.length; p++) {
+                    let volumeResponse = await getCustomerVolumes({
+                        CustomerID: customerID,
+                        PeriodID: periods[p].PeriodID,
+                        PeriodTypeID: periods[p].PeriodTypeID,
+                        VolumesToFetch: [2, 5, 6, 7, 8, 9]
+                    });
+
+                    if (volumeResponse !== undefined) {
+                        volumes.push(volumeResponse);
+                    }
+                }
+
+                for (var i = 0; i < realTimeResponse.Commissions.length; i++) {
+                    var data = realTimeResponse.Commissions[i];
+                    let usdSum = 0, cadSum = 0, teamSum = 0, savvySum = 0;
+                    if (data.Bonuses.length > 0) {
+                        data.Bonuses.forEach((bonus) => {
+                            let bonusId = Number(bonus.BonusID);
+                            if (bonusId == constants.BonusTypes.DeferredCommission) {
+                                usdSum += Number(bonus.Amount);
+                            }
+                            else if (bonusId == constants.BonusTypes.SavvySeller) {
+                                savvySum += Number(bonus.Amount);
+                            }
+                            else {
+                                teamSum += Number(bonus.Amount);
+                            }
+                        })
+                    }
+                    var resultData = {
+                        TeamSum: teamSum,
+                        UsdSum: usdSum,
+                        CadSum: cadSum,
+                        SavvySum: savvySum,
+                        Commission: data,
+                        Volume: {},
+                        Period: {}
+                    }
+                    resultData.Volume = volumes.find(x => Number(x.PeriodTypeID) === Number(data.PeriodType) && Number(x.PeriodID) === Number(data.PeriodID));
+                    resultData.Period = periods.find(p => Number(p.PeriodTypeID) === Number(data.PeriodType) && Number(p.PeriodID) === Number(data.PeriodID));
+                    RealTimeCommission.push(resultData);
+                }
+            }
+            else {
+                const periodIds = realTimeResponse.Commissions.map(data => data.PeriodID);
+                let periods = await getPeriods({ PeriodIDs: periodIds, PeriodTypeID: realTimeResponse.Commissions[0].PeriodType });
+
+                realTimeResponse.Commissions.forEach(function (data, index) {
+                    const period = periods.find(function (element) {
+                        return (element.PeriodID === Number(data.PeriodID) && element.PeriodTypeID === Number(data.PeriodType))
+                    });
+
+                    if (period !== undefined) {
+                        const periodData = {
+                            PeriodID: period.PeriodID,
+                            PeriodTypeID: period.PeriodTypeID,
+                            PeriodDescription: period.PeriodDescription,
+                            StartDate: period.StartDate,
+                            EndDate: period.EndDate,
+                            ActualEndDate: period.ActualEndDate
+                        };
+                        RealTimeCommission.push(periodData);
+                    }
+                })
+            }
             return resolve(RealTimeCommission);
         }
-
-        if (request.GetPeriodVolumes) {
-            let periodRequests = [];
-            let periods = [];
-            for (var i = 0; i < realTimeResponse.Commissions.length; i++) {
-                let commissionResponse = realTimeResponse.Commissions[i];
-
-                let periodID = commissionResponse.PeriodID;
-                let periodTypeID = commissionResponse.PeriodType;
-
-                let req = periodRequests.find(x => x.PeriodTypeID === periodTypeID)
-                if (req === null || req === undefined) {
-                    periodRequests.push({
-                        PeriodTypeID: periodTypeID,
-                        PeriodIDs: [periodID]
-                    })
-                }
-                else {
-                    if (req.PeriodIDs.indexOf(periodID) <= -1)
-                        req.PeriodIDs.push(periodID);
-                }
-            }
-
-            for (let pr = 0; pr < periodRequests.length; pr++) {
-                let periodResponse = await getPeriods(periodRequests[pr])
-                for (let period = 0; period < periodResponse.length; period++) {
-                    periods.push(periodResponse[period]);
-                }
-            }
-
-            let volumes = [];
-
-            for (let p = 0; p < periods.length; p++) {
-                let volumeResponse = await getCustomerVolumes({
-                    CustomerID: customerID,
-                    PeriodID: periods[p].PeriodID,
-                    PeriodTypeID: periods[p].PeriodTypeID,
-                    VolumesToFetch: [2, 5, 6, 7, 8, 9]
-                });
-
-                if (volumeResponse !== undefined) {
-                    volumes.push(volumeResponse);
-                }
-            }
-
-            for (var i = 0; i < realTimeResponse.Commissions.length; i++) {
-                var data = realTimeResponse.Commissions[i];
-                let usdSum = 0, cadSum = 0, teamSum = 0, savvySum = 0;
-                if (data.Bonuses.length > 0) {
-                    data.Bonuses.forEach((bonus) => {
-                        let bonusId = Number(bonus.BonusID);
-                        if (bonusId == constants.BonusTypes.DeferredCommission) {
-                            usdSum += Number(bonus.Amount);
-                        }
-                        else if (bonusId == constants.BonusTypes.SavvySeller) {
-                            savvySum += Number(bonus.Amount);
-                        }
-                        else {
-                            teamSum += Number(bonus.Amount);
-                        }
-                    })
-                }
-                var resultData = {
-                    TeamSum: teamSum,
-                    UsdSum: usdSum,
-                    CadSum: cadSum,
-                    SavvySum: savvySum,
-                    Commission: data,
-                    Volume: {},
-                    Period: {}
-                }
-                resultData.Volume = volumes.find(x => Number(x.PeriodTypeID) === Number(data.PeriodType) && Number(x.PeriodID) === Number(data.PeriodID));
-                resultData.Period = periods.find(p => Number(p.PeriodTypeID) === Number(data.PeriodType) && Number(p.PeriodID) === Number(data.PeriodID));
-                RealTimeCommission.push(resultData);
-            }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
         }
-        else {
-            const periodIds = realTimeResponse.Commissions.map(data => data.PeriodID);
-            let periods = await getPeriods({ PeriodIDs: periodIds, PeriodTypeID: realTimeResponse.Commissions[0].PeriodType });
-
-            realTimeResponse.Commissions.forEach(function (data, index) {
-                const period = periods.find(function (element) {
-                    return (element.PeriodID === Number(data.PeriodID) && element.PeriodTypeID === Number(data.PeriodType))
-                });
-
-                if (period !== undefined) {
-                    const periodData = {
-                        PeriodID: period.PeriodID,
-                        PeriodTypeID: period.PeriodTypeID,
-                        PeriodDescription: period.PeriodDescription,
-                        StartDate: period.StartDate,
-                        EndDate: period.EndDate,
-                        ActualEndDate: period.ActualEndDate
-                    };
-                    RealTimeCommission.push(periodData);
-                }
-            })
-        }
-        return resolve(RealTimeCommission);
     });
-    return promise;
 }
 
 /**
@@ -526,7 +546,8 @@ export const getRealTimeBonusDetails = function (request) {
             return resolve(result);
         }
         catch (err) {
-            throw err;//TODO: Error log to be added
+            console.log(err.message);
+            // throw err;//TODO: Error log to be added
         }
     });
 }
@@ -541,8 +562,9 @@ export const getRealTimeBonusDetails = function (request) {
  * @returns Customer Historical Bonus
  */
 export const getHistoricalBonus = function (request) {
-    const promise = new Promise(async (resolve, reject) => {
-        let query = ` SELECT 
+    return new Promise(async (resolve, reject) => {
+        try {
+            let query = ` SELECT 
                                cd.BonusID
                               ,b.BonusDescription
                               ,cd.FromCustomerID
@@ -578,28 +600,32 @@ export const getHistoricalBonus = function (request) {
                                AND cd.BonusID = @bonusid
                                ORDER BY cd.FromCustomerID DESC`;
 
-        let params = [
-            {
-                Name: 'commissionrunid',
-                Type: sql.Int,
-                Value: request.CommissionRunID
-            },
-            {
-                Name: 'customerid',
-                Type: sql.BigInt,
-                Value: request.CustomerID
-            },
-            {
-                Name: 'bonusid',
-                Type: sql.Int,
-                Value: request.BonusID
-            }
-        ];
+            let params = [
+                {
+                    Name: 'commissionrunid',
+                    Type: sql.Int,
+                    Value: request.CommissionRunID
+                },
+                {
+                    Name: 'customerid',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                },
+                {
+                    Name: 'bonusid',
+                    Type: sql.Int,
+                    Value: request.BonusID
+                }
+            ];
 
-        let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
-        return resolve(resData);
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+            return resolve(resData);
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
+        }
     });
-    return promise;
 }
 
 /**
@@ -661,7 +687,8 @@ export const getCurrentCommission = function (request) {
             return resolve(responseData);
         }
         catch (err) {
-            throw err;//TODO:Error log to be added
+            console.log(err.message);
+            //throw err;//TODO:Error log to be added
         }
     });
 }

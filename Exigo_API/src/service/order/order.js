@@ -267,7 +267,8 @@ export const getCustomerOrders = function (request) {
             return resolve(CustomerOrdersResponse);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }

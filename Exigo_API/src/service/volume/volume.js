@@ -161,7 +161,8 @@ export const getCustomerVolumes = function (request) {
             return resolve(volumes[0]);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }

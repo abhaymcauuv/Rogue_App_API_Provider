@@ -93,7 +93,8 @@ export const getRealTimeCommissions = function (customerid) {
             return resolve(RealTimeResponse);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }
@@ -266,7 +267,7 @@ export const getRankQualifications = function (request) {
                     PayeeQualificationLegs: []
                 }
 
-                let payeeQualificationLegs = []
+                let payeeQualificationLegs = [];
                 qualificationsResult.PayeeQualificationLegs.forEach((data, index) => {
                     let ArrayOfQualification = [];
                     data.QualificationResponse.forEach((d, i) => {
@@ -294,7 +295,8 @@ export const getRankQualifications = function (request) {
             return resolve(RankQualifications);
         }
         catch (err) {
-            throw err
+            console.log(err.message);
+            //throw err
         }
     });
 }
