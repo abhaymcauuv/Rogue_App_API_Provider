@@ -24,6 +24,7 @@ import {
     getVolumesList,
     getRankAdvancement
 } from '../service/report/report';
+import { getInventoryOrders } from '../service/order/order';
 
 //#region Commission
 
@@ -138,6 +139,7 @@ export const historicalBonusDetails = function (request, reply) {
 }
 
 //#endregion
+
 
 //#region Report
 
@@ -306,4 +308,32 @@ export const rankAdvancement = function (request, reply) {
     return getRankAdvancement(customerId);
 }
 
+//#endregion
+
+//#region Order
+/**
+ * Get Inventory Orders
+ * @param CustomerID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @param SearchData
+ * @returns Inventory Orders
+ */
+export const inventoryOrders = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getInventoryOrders({
+        CustomerID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder,
+        SearchData: request.payload.SearchData
+    });
+}
 //#endregion

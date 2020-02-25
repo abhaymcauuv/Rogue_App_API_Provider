@@ -223,7 +223,7 @@ export const getOrderList = function (request) {
                                         AND ((ud.downlinecustomerid = @designerid AND (o.PriceTypeID = 3 OR (o.BusinessVolumeTotal = 0 AND o.other14 = ''))) OR (o.PriceTypeID IN (1, 2) AND o.other14 = @designerid))`;
 
                 let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
-                noOfOrders = res.length > 0 ? res[0].orders : 0
+                noOfOrders = res.length > 0 ? res[0].orders : 0;
             }
             return resolve({ "Orders": resData, "Count": noOfOrders });
         }
