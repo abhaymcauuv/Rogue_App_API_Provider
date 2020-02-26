@@ -6,7 +6,6 @@
  */
 import sql from 'mssql';
 import { executeQuery } from '../../db/mssql';
-import * as constants from '../../common/constant';
 
 export const getCustomerOrders = function (request) {
     const customerID = Number(request.CustomerID)
@@ -273,7 +272,6 @@ export const getCustomerOrders = function (request) {
     });
 }
 
-
 /**
  * Get Inventory Orders 
  * @param CustomerID
@@ -347,3 +345,5 @@ export const getInventoryOrders = function (request) {
         }
     });
 }
+
+
