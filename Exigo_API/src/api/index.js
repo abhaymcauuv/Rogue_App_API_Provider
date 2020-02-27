@@ -24,7 +24,7 @@ import {
     getVolumesList,
     getRankAdvancement
 } from '../service/report/report';
-import { getInventoryOrders } from '../service/order/order';
+import { getInventoryOrders, getPersonalUseOrders } from '../service/order/order';
 
 //#region Commission
 
@@ -336,4 +336,31 @@ export const inventoryOrders = function (request, reply) {
         SearchData: request.payload.SearchData
     });
 }
+
+/**
+ * Get Personal Use Orders
+ * @param CustomerID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @param SearchData
+ * @returns Personal Use Orders
+ */
+export const personalUseOrders = function (request, reply) {
+    const customerId = Number(request.payload.CustomerID);
+    const pageSize = Number(request.payload.PageSize);
+    const pageNo = Number(request.payload.PageNo);
+    return getPersonalUseOrders({
+        CustomerID: customerId,
+        PageSize: pageSize,
+        PageNo: pageNo,
+        IsCount: request.payload.IsCount,
+        SortName: request.payload.SortName,
+        SortOrder: request.payload.SortOrder,
+        SearchData: request.payload.SearchData
+    });
+}
+
 //#endregion

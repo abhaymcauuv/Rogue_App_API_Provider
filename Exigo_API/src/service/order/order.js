@@ -283,7 +283,6 @@ export const getCustomerOrders = function (request) {
  * @param SearchData
  * @returns Inventory Orders
  */
-
 export const getInventoryOrders = function (request) {
     return new Promise(async (resolve, reject) => {
         try {
@@ -346,4 +345,76 @@ export const getInventoryOrders = function (request) {
     });
 }
 
+/**
+ * Get Personal Use Orders
+ * @param CustomerID
+ * @param PageSize
+ * @param PageNo
+ * @param IsCount
+ * @param SortName
+ * @param SortOrder
+ * @param SearchData
+ * @returns Personal Use Orders
+ */
+export const getPersonalUseOrders = function (request) {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let searchText = '';
+            if (request.SearchData) {
+                searchText = "AND ( o.OrderID like '" + request.SearchData + "%')";
+            }
 
+            let sortText = 'ORDER BY OrderDate DESC';
+            if (request.SortName && request.SortOrder) {
+                sortText = 'Order by ' + request.SortName + ' ' + request.SortOrder;
+            }
+            let query = `SELECT
+                             [OrderDate]
+                            ,[OrderID] 
+                            ,[Total] 
+                            ,[PV] = [BusinessVolumeTotal]
+                            ,[TypeDescription] = ot.OrderTypeDescription
+                            ,[StatusDescription] = os.OrderStatusDescription
+                            ,CurrencyCode
+                         FROM [Orders] AS o
+                            INNER JOIN OrderStatuses AS os ON o.OrderStatusID = os.OrderStatusID
+                            INNER JOIN OrderTypes AS ot ON o.OrderTypeID = ot.OrderTypeID
+                         WHERE 
+                             CustomerID = @customerId
+                             AND Other13 = '1'
+                             ${searchText}              
+                             ${ sortText} `;
+
+            let params = [
+                {
+                    Name: 'customerId',
+                    Type: sql.BigInt,
+                    Value: request.CustomerID
+                }
+            ];
+
+            let resData = await executeQuery({ SqlQuery: query, SqlParams: params, PageSize: Number(request.PageSize), PageNumber: Number(request.PageNo) });
+
+            let noOfOrders = 0;
+            if (!request.IsCount) {
+                let countQuery = `SELECT COUNT(OrderID) as orders
+                                         FROM [Orders] AS o
+                                         INNER JOIN OrderStatuses AS os ON o.OrderStatusID = os.OrderStatusID
+                                         INNER JOIN OrderTypes AS ot ON o.OrderTypeID = ot.OrderTypeID
+                                    WHERE 
+                                         CustomerID = @customerId
+                                         AND Other13 = '1'
+                                         ${searchText}`;
+
+                let res = await executeQuery({ SqlQuery: countQuery, SqlParams: params });
+                noOfOrders = res.length > 0 ? res[0].orders : 0;
+            }
+            return resolve({ "Orders": resData, "Count": noOfOrders });
+        }
+        catch (err) {
+            console.log(err.message);
+            //throw err;
+            //TODO:Error log to be added
+        }
+    });
+}
