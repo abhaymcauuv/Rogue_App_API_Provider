@@ -22,7 +22,9 @@ import {
     clubCoutureCustomerList,
     activity,
     volumesList,
-    rankAdvancement
+    rankAdvancement,
+    inventoryOrders,
+    personalUseOrders
 } from './index';
 
 export const routes = [
@@ -43,6 +45,8 @@ export const routes = [
     { method: 'GET', path: '/activity/{id}', handler: activity },
     { method: 'POST', path: '/volumes', handler: volumesList },
     { method: 'GET', path: '/rankadvancement/{id}', handler: rankAdvancement },
+    { method: 'POST', path: '/inventoryorders', handler: inventoryOrders },
+    { method: 'POST', path: '/personaluseorders', handler: personalUseOrders }
 ]
 export default routes;
 
