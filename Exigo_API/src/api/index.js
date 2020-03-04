@@ -26,6 +26,17 @@ import {
 } from '../service/report/report';
 import { getInventoryOrders, getPersonalUseOrders } from '../service/order/order';
 
+
+import { volumeList } from '../service/volume/volume';
+export const volumes = function (request, reply) {
+    return volumeList(request.payload.CustomerId, request.payload.PageSize, request.payload.PageNumber)
+}
+
+import { getRanks } from '../service/rank/rank';
+export const getRankList = function (request, reply) {
+    return getRanks();
+}
+
 //#region Commission
 
 
