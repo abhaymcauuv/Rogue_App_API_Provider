@@ -25,6 +25,7 @@ import {
     getRankAdvancement
 } from '../service/report/report';
 import { getInventoryOrders, getPersonalUseOrders } from '../service/order/order';
+import { getItemCategory } from '../service/store/store';
 
 
 import { volumeList } from '../service/volume/volume';
@@ -322,6 +323,7 @@ export const rankAdvancement = function (request, reply) {
 //#endregion
 
 //#region Order
+
 /**
  * Get Inventory Orders
  * @param CustomerID
@@ -375,3 +377,17 @@ export const personalUseOrders = function (request, reply) {
 }
 
 //#endregion
+
+
+//#region Store
+
+/**
+ * Get Item Category
+ * @returns Item Category
+ */
+export const itemCategory = function (request, reply) {
+    return getItemCategory();
+}
+//#endregion
+
+

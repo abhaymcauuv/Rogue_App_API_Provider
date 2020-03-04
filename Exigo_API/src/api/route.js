@@ -26,7 +26,8 @@ import {
     inventoryOrders,
     personalUseOrders,
     volumes,
-    getRankList
+    getRankList,
+    itemCategory
 } from './index';
 
 export const routes = [
@@ -50,7 +51,8 @@ export const routes = [
     { method: 'POST', path: '/inventoryorders', handler: inventoryOrders },
     { method: 'POST', path: '/personaluseorders', handler: personalUseOrders },
     { method: 'POST', path: '/volumes', handler: volumes },
-    { method: 'GET', path: '/rank', handler: getRankList }
+    { method: 'GET', path: '/rank', handler: getRankList },
+    { method: 'GET', path: '/itemcategory', handler: itemCategory }
 ]
 export default routes;
 
